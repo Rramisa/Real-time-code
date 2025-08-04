@@ -1,59 +1,98 @@
-import React, {useState} from 'react'
-import {v4 as uuidV4} from 'uuid';
-import toast from 'react-hot-toast'
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
+import './Auth.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [roomId,setRoomId] = useState();
-  const [username, setUsername] = useState('');
-  const createNewRoom = (e) => {
-    e.preventDefault();
-    const id = uuidV4();
-    setRoomId(id);
-    toast.success("Created a new room")
+  const { user, loading, logout } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/editor');
+    }
+  }, [user, loading, navigate]);
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
   };
-  const joinRoom = () => {
-    if(!roomId || !username){
-      toast.error("Room ID and username not found")
-    return;  
-    }  
-    //
-    navigate(`/editor/${roomId}`, {
-            state: {
-                username,
-            },
-        });
+
+  if (loading) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
   }
-  const handleinput = (e) => {
-        if (e.code === 'Enter') {
-            joinRoom();
-        }
-    };
-  return <div className="homePageWrapper">
-    <div className="formWrapper">
-      <img className="homepageLogo" src='code-sync.png' width={150} height={150} alt="code-sync-logo"/>
-      <h4 className="mainLabel">Paste Join code</h4>
-      <div className="inputGroup">
-        <input type="text" className="inputBox" placeholder="Room Code" onChange={(e) => setRoomId(e.target.value)} value={roomId} onKeyUp={handleinput}/>
-        <input type="text" className="inputBox" placeholder="Username" onChange={(e) => setUsername(e.target.value)} value={username} onKeyUp={handleinput}/>
-        <button className="btn joinBtn" onClick={joinRoom}>Join</button>
-        <span className="createInfo">
-           Create &nbsp; 
-          <a onClick={createNewRoom} href=" " className="createNewBtn">
-            New Room
-          </a>
-        </span>
+
+  return (
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <img className="auth-logo" src="/code-sync.png" width={150} height={150} alt="code-sync-logo"/>
+          <h2>Welcome to CodeSync</h2>
+          <p>Collaborative coding platform for teams</p>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+          <p style={{ color: '#666', marginBottom: '20px' }}>
+            Join our collaborative coding platform and start coding together in real-time.
+          </p>
+          
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button 
+              onClick={() => navigate('/login')}
+              className="auth-button"
+              style={{ flex: '1', minWidth: '120px' }}
+            >
+              Sign In
+            </button>
+            <button 
+              onClick={() => navigate('/register')}
+              className="auth-button"
+              style={{ 
+                flex: '1', 
+                minWidth: '120px',
+                background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)'
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
+
+        <div className="auth-links">
+          <p style={{ fontSize: '12px', color: '#999' }}>
+            Built by Group 8 - CSE471
+          </p>
+          {user && (
+            <button 
+              onClick={handleLogout}
+              style={{
+                marginTop: '20px',
+                padding: '10px 20px',
+                backgroundColor: '#ff4757',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              Logout
+            </button>
+          )}
+        </div>
       </div>
     </div>
-    <footer>
-      <h4>
-        Built by Ramisa
-      </h4>
-    </footer>
-  </div>;
-  
+  );
 };
 
 export default Home;

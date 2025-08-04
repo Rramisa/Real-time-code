@@ -1,70 +1,174 @@
-# Getting Started with Create React App
+# CodeSync - Collaborative Code Editor
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A real-time collaborative code editor built with the MERN stack (MongoDB, Express.js, React.js, Node.js) with user authentication and real-time collaboration features.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+### Module 1: UI Management ✅
+- [x] User registration, sign in, and password reset
+- [x] Create, open, edit, and delete files in a shared file system
+- [ ] Syntax highlighting with error detection
+- [ ] Real-time chat functionality within files
 
-### `npm start`
+### Module 2: AI and User Status Management
+- [x] Multiple users can edit files simultaneously with instant synchronization
+- [ ] User presence (online/offline status)
+- [ ] User profile management
+- [ ] Download entire codebase as ZIP
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Module 3: Code Management
+- [ ] Different themes based on user preferences
+- [ ] Font type and size customization
+- [ ] Code execution within the collaborative environment
+- [ ] Built-in AI assistant for code generation and error detection
+- [ ] Automatic programming language detection
+- [ ] AI-powered code language conversion
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Tech Stack
 
-### `npm test`
+- **Frontend**: React.js, Socket.io-client
+- **Backend**: Node.js, Express.js, Socket.io
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JWT (JSON Web Tokens)
+- **Password Hashing**: bcryptjs
+- **Real-time Communication**: Socket.io
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Prerequisites
 
-### `npm run build`
+- Node.js (v14 or higher)
+- MongoDB (local installation or MongoDB Atlas)
+- npm or yarn
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Installation
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd CSE471_Group8
+   ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-### `npm run eject`
+3. **Set up environment variables**
+   Create a `.env` file in the root directory:
+   ```env
+   MONGODB_URI=mongodb://localhost:27017/collaborative-editor
+   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+   PORT=5000
+   ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+4. **Start MongoDB**
+   Make sure MongoDB is running on your system. If using MongoDB Atlas, update the `MONGODB_URI` in your `.env` file.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+5. **Start the development servers**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+   **Terminal 1 - Start the backend server:**
+   ```bash
+   npm run server:dev
+   ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+   **Terminal 2 - Start the React development server:**
+   ```bash
+   npm start
+   ```
 
-## Learn More
+6. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Usage
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. **Register a new account** or **Sign in** with existing credentials
+2. **Access the collaborative editor** - all authenticated users share the same workspace
+3. **Start coding collaboratively** - changes are synchronized in real-time
+4. **Logout** when done
 
-### Code Splitting
+## API Endpoints
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/reset-password` - Request password reset
+- `POST /api/auth/reset-password-confirm` - Confirm password reset
 
-### Analyzing the Bundle Size
+### User Profile
+- `GET /api/user/profile` - Get user profile (protected)
+- `PUT /api/user/profile` - Update user profile (protected)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Project Structure
 
-### Making a Progressive Web App
+```
+CSE471_Group8/
+├── public/
+│   ├── code-sync.png
+│   └── index.html
+├── src/
+│   ├── components/
+│   │   ├── Client.js
+│   │   ├── editor.js
+│   │   └── ProtectedRoute.js
+│   ├── context/
+│   │   └── AuthContext.js
+│   ├── pages/
+│   │   ├── home.js
+│   │   ├── editorpage.js
+│   │   ├── Login.js
+│   │   ├── Register.js
+│   │   ├── ForgotPassword.js
+│   │   └── Auth.css
+│   ├── App.js
+│   └── index.js
+├── server.js
+├── package.json
+└── README.md
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Development
 
-### Advanced Configuration
+### Adding New Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. **Backend Changes**: Modify `server.js` for new API endpoints
+2. **Frontend Changes**: Add new components in `src/components/` or pages in `src/pages/`
+3. **Database Changes**: Update schemas in `server.js`
 
-### Deployment
+### Database Schema
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**User Schema:**
+```javascript
+{
+  username: String (unique),
+  email: String (unique),
+  password: String (hashed),
+  profile: {
+    preferredLanguages: [String],
+    theme: String,
+    fontSize: Number
+  },
+  createdAt: Date
+}
+```
 
-### `npm run build` fails to minify
+## Contributing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## Team Members
+
+- **Debjyoti** - Authentication, File Management, Real-time Collaboration
+- **Ramisa** - Syntax Highlighting, User Status, Profile Management
+- **Sadar** - Chat Functionality, Code Execution, AI Integration
+
+## License
+
+This project is part of CSE471 course work.
+
+## Support
+
+For issues and questions, please contact the development team.

@@ -21,3 +21,5 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+MONGO_URI=mongodb+srv://sumontasyt:rjsvgzErQEUbh9KD@cse471.ifs5nc6.mongodb.net/?retryWrites=true&w=majority&appName=CSE471
