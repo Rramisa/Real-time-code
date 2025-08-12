@@ -1,83 +1,89 @@
 # CodeSync - Collaborative Code Editor
 
-A real-time collaborative code editor built with the MERN stack (MongoDB, Express.js, React.js, Node.js) with user authentication and real-time collaboration features.
+A real-time collaborative code editor built with the MERN stack (MongoDB, Express.js, React.js, Node.js) featuring a VS Code-like interface with user authentication and file management capabilities.
 
 ## Features
 
 ### Module 1: UI Management ✅
 - [x] User registration, sign in, and password reset
+- [x] VS Code-like interface with Monaco Editor
 - [x] Create, open, edit, and delete files in a shared file system
+- [x] File and folder management system
+- [x] Responsive design with modern UI components
+
+### Module 2: User Status Management ✅
+- [x] JWT-based authentication system
+- [x] Protected routes and user sessions
+- [x] User profile management
+- [x] Secure password reset functionality
+
+### Module 3: Code Management 🚧
+- [x] Monaco Editor integration for code editing
+- [x] File upload and download capabilities
+- [ ] Real-time collaborative editing
 - [ ] Syntax highlighting with error detection
-- [ ] Real-time chat functionality within files
-
-### Module 2: AI and User Status Management
-- [x] Multiple users can edit files simultaneously with instant synchronization
-- [ ] User presence (online/offline status)
-- [ ] User profile management
-- [ ] Download entire codebase as ZIP
-
-### Module 3: Code Management
-- [ ] Different themes based on user preferences
-- [ ] Font type and size customization
 - [ ] Code execution within the collaborative environment
-- [ ] Built-in AI assistant for code generation and error detection
-- [ ] Automatic programming language detection
-- [ ] AI-powered code language conversion
+- [ ] Built-in AI assistant for code generation
+- [ ] Different themes and customization options
 
 ## Tech Stack
 
-- **Frontend**: React.js, Socket.io-client
-- **Backend**: Node.js, Express.js, Socket.io
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT (JSON Web Tokens)
-- **Password Hashing**: bcryptjs
-- **Real-time Communication**: Socket.io
+- **Frontend**: React.js 19.1.1, Monaco Editor, React Router DOM, React Hot Toast, Axios
+- **Backend**: Node.js, Express.js 5.1.0
+- **Database**: MongoDB with Mongoose 8.17.0
+- **Authentication**: JWT (JSON Web Tokens) 9.0.2
+- **Password Hashing**: bcryptjs 2.4.3
+- **Development**: Nodemon, Concurrently
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
 - MongoDB (local installation or MongoDB Atlas)
-- npm or yarn
+- npm package manager
 
 ## Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/sum0nta/CSE471_Group8.git
    cd CSE471_Group8
    ```
 
-2. **Install dependencies**
+2. **Install all dependencies**
    ```bash
-   npm install
+   npm run install:all
    ```
+   This will install dependencies for the root project, backend, and frontend.
 
 3. **Set up environment variables**
-   Create a `.env` file in the root directory:
+   Create a `.env` file in the `backend` directory:
    ```env
-   MONGODB_URI=mongodb://localhost:27017/collaborative-editor
+   MONGODB_URI=mongodb://localhost:27017/codesync
    JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-   PORT=5000
+   PORT=5001
    ```
 
 4. **Start MongoDB**
    Make sure MongoDB is running on your system. If using MongoDB Atlas, update the `MONGODB_URI` in your `.env` file.
 
 5. **Start the development servers**
-
-   **Terminal 1 - Start the backend server:**
    ```bash
-   npm run server:dev
+   npm run dev
    ```
-
-   **Terminal 2 - Start the React development server:**
-   ```bash
-   npm start
-   ```
+   This single command will start both the backend and frontend servers concurrently.
 
 6. **Access the application**
    - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Backend API: http://localhost:5001
+
+## Available Scripts
+
+From the root directory:
+- `npm run dev` - Start both frontend and backend servers
+- `npm run backend:dev` - Start only the backend server
+- `npm run frontend:dev` - Start only the frontend server
+- `npm run install:all` - Install dependencies for all projects
+- `npm run build` - Build the frontend for production
 
 ## Usage
 
@@ -91,48 +97,86 @@ A real-time collaborative code editor built with the MERN stack (MongoDB, Expres
 ### Authentication
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
-- `POST /api/auth/reset-password` - Request password reset
-- `POST /api/auth/reset-password-confirm` - Confirm password reset
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Confirm password reset
 
-### User Profile
+### User Management
 - `GET /api/user/profile` - Get user profile (protected)
 - `PUT /api/user/profile` - Update user profile (protected)
+
+### File Management
+- `GET /api/files` - Get user's files (protected)
+- `POST /api/files` - Create new file (protected)
+- `PUT /api/files/:id` - Update file content (protected)
+- `DELETE /api/files/:id` - Delete file (protected)
+- `POST /api/files/upload` - Upload file (protected)
 
 ## Project Structure
 
 ```
 CSE471_Group8/
-├── public/
-│   ├── code-sync.png
-│   └── index.html
-├── src/
-│   ├── components/
-│   │   ├── Client.js
-│   │   ├── editor.js
-│   │   └── ProtectedRoute.js
-│   ├── context/
-│   │   └── AuthContext.js
-│   ├── pages/
-│   │   ├── home.js
-│   │   ├── editorpage.js
-│   │   ├── Login.js
-│   │   ├── Register.js
-│   │   ├── ForgotPassword.js
-│   │   └── Auth.css
-│   ├── App.js
-│   └── index.js
-├── server.js
+├── backend/
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── fileController.js
+│   │   └── userController.js
+│   ├── helper/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── File.js
+│   │   ├── Folder.js
+│   │   ├── User.js
+│   │   └── UserFile.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── fileRoutes.js
+│   │   └── userRoutes.js
+│   ├── database.js
+│   ├── index.js
+│   └── package.json
+├── frontend/
+│   ├── public/
+│   │   ├── code-sync.png
+│   │   ├── favicon.ico
+│   │   └── index.html
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ProtectedRoute.js
+│   │   │   └── VSCodeLayout.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.js
+│   │   ├── pages/
+│   │   │   ├── Auth.css
+│   │   │   ├── ForgotPassword.js
+│   │   │   ├── home.js
+│   │   │   ├── Login.js
+│   │   │   └── Register.js
+│   │   ├── app.jsx
+│   │   └── index.js
+│   └── package.json
 ├── package.json
-└── README.md
+├── README.md
+└── SETUP.md
 ```
 
 ## Development
 
 ### Adding New Features
 
-1. **Backend Changes**: Modify `server.js` for new API endpoints
-2. **Frontend Changes**: Add new components in `src/components/` or pages in `src/pages/`
-3. **Database Changes**: Update schemas in `server.js`
+1. **Backend Changes**: 
+   - Add new routes in `backend/routes/`
+   - Create controllers in `backend/controllers/`
+   - Define models in `backend/models/`
+   - Update `backend/index.js` for new route imports
+
+2. **Frontend Changes**: 
+   - Add new components in `frontend/src/components/`
+   - Add new pages in `frontend/src/pages/`
+   - Update routing in `frontend/src/app.jsx`
+
+3. **Database Changes**: 
+   - Update schemas in `backend/models/`
+   - Create migration scripts if needed
 
 ### Database Schema
 
@@ -142,33 +186,74 @@ CSE471_Group8/
   username: String (unique),
   email: String (unique),
   password: String (hashed),
-  profile: {
-    preferredLanguages: [String],
-    theme: String,
-    fontSize: Number
-  },
-  createdAt: Date
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+**File Schema:**
+```javascript
+{
+  name: String (required),
+  content: String,
+  type: String (default: 'file'),
+  size: Number,
+  owner: ObjectId (ref: 'User'),
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+**Folder Schema:**
+```javascript
+{
+  name: String (required),
+  parent: ObjectId (ref: 'Folder'),
+  owner: ObjectId (ref: 'User'),
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/new-feature`)
 3. Make your changes
 4. Test thoroughly
-5. Submit a pull request
+5. Commit your changes (`git commit -am 'Add new feature'`)
+6. Push to the branch (`git push origin feature/new-feature`)
+7. Submit a pull request
 
 ## Team Members
 
-- **Debjyoti** - Authentication, File Management, Real-time Collaboration
-- **Ramisa** - Syntax Highlighting, User Status, Profile Management
-- **Sadar** - Chat Functionality, Code Execution, AI Integration
+- **Sumonta** - Project Lead, Backend Development, Authentication System
+- **Team Member 2** - Frontend Development, UI/UX Design
+- **Team Member 3** - Database Design, File Management System
+
+## Troubleshooting
+
+### Common Issues
+
+1. **MongoDB Connection Error**: 
+   - Ensure MongoDB is running locally or check Atlas connection string
+   - Verify `.env` file is in the `backend` directory
+
+2. **Port Already in Use**:
+   - Backend default port: 5001
+   - Frontend default port: 3000
+   - Change ports in respective package.json files if needed
+
+3. **Dependencies Issues**:
+   - Run `npm run install:all` to ensure all dependencies are installed
+   - Clear node_modules and package-lock.json if issues persist
 
 ## License
 
-This project is part of CSE471 course work.
+This project is part of CSE471 course work at BRAC University.
 
 ## Support
 
-For issues and questions, please contact the development team.
+For issues and questions, please contact the development team or create an issue in the repository.
