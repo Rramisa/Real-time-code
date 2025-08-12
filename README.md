@@ -67,6 +67,11 @@ A real-time collaborative code editor built with the MERN stack (MongoDB, Expres
    Make sure MongoDB is running on your system. If using MongoDB Atlas, update the `MONGODB_URI` in your `.env` file.
 
 5. **Start the development servers**
+<<<<<<< HEAD
+=======
+
+   **Start both the backend and frontend servers simultaneously:**
+>>>>>>> 0477622197cc2db3efe8a3ef5a5eb728f9c751dc
    ```bash
    npm run dev
    ```
@@ -115,6 +120,13 @@ From the root directory:
 
 ```
 CSE471_Group8/
+<<<<<<< HEAD
+=======
+├── .env
+├── .gitignore  
+├── README.md
+├── SETUP.md
+>>>>>>> 0477622197cc2db3efe8a3ef5a5eb728f9c751dc
 ├── backend/
 │   ├── controllers/
 │   │   ├── authController.js
@@ -134,6 +146,7 @@ CSE471_Group8/
 │   ├── database.js
 │   ├── index.js
 │   └── package.json
+<<<<<<< HEAD
 ├── frontend/
 │   ├── public/
 │   │   ├── code-sync.png
@@ -157,6 +170,26 @@ CSE471_Group8/
 ├── package.json
 ├── README.md
 └── SETUP.md
+=======
+└── frontend/
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   │   ├── ProtectedRoute.js
+    │   │   └── VSCodeLayout.jsx
+    │   ├── context/
+    │   │   └── AuthContext.js
+    │   ├── pages/
+    │   │   ├── Auth.css
+    │   │   ├── ForgotPassword.js
+    │   │   ├── home.js
+    │   │   ├── Login.js
+    │   │   └── Register.js
+    │   ├── app.jsx
+    │   ├── index.js
+    │   └── index.css
+    └── package.json
+>>>>>>> 0477622197cc2db3efe8a3ef5a5eb728f9c751dc
 ```
 
 ## Development
