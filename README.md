@@ -11,7 +11,7 @@ A real-time collaborative code editor built with the MERN stack (MongoDB, Expres
 - [ ] Real-time chat functionality within files
 
 ### Module 2: AI and User Status Management
-- [x] Multiple users can edit files simultaneously with instant synchronization
+- [ ] Multiple users can edit files simultaneously with instant synchronization
 - [ ] User presence (online/offline status)
 - [ ] User profile management
 - [ ] Download entire codebase as ZIP
@@ -65,14 +65,9 @@ A real-time collaborative code editor built with the MERN stack (MongoDB, Expres
 
 5. **Start the development servers**
 
-   **Terminal 1 - Start the backend server:**
+   **Start both the backend and frontend servers simultaneously:**
    ```bash
-   npm run server:dev
-   ```
-
-   **Terminal 2 - Start the React development server:**
-   ```bash
-   npm start
+   npm run dev
    ```
 
 6. **Access the application**
@@ -102,28 +97,47 @@ A real-time collaborative code editor built with the MERN stack (MongoDB, Expres
 
 ```
 CSE471_Group8/
-├── public/
-│   ├── code-sync.png
-│   └── index.html
-├── src/
-│   ├── components/
-│   │   ├── Client.js
-│   │   ├── editor.js
-│   │   └── ProtectedRoute.js
-│   ├── context/
-│   │   └── AuthContext.js
-│   ├── pages/
-│   │   ├── home.js
-│   │   ├── editorpage.js
-│   │   ├── Login.js
-│   │   ├── Register.js
-│   │   ├── ForgotPassword.js
-│   │   └── Auth.css
-│   ├── App.js
-│   └── index.js
-├── server.js
-├── package.json
-└── README.md
+├── .env
+├── .gitignore  
+├── README.md
+├── SETUP.md
+├── backend/
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── fileController.js
+│   │   └── userController.js
+│   ├── helper/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── File.js
+│   │   ├── Folder.js
+│   │   ├── User.js
+│   │   └── UserFile.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── fileRoutes.js
+│   │   └── userRoutes.js
+│   ├── database.js
+│   ├── index.js
+│   └── package.json
+└── frontend/
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   │   ├── ProtectedRoute.js
+    │   │   └── VSCodeLayout.jsx
+    │   ├── context/
+    │   │   └── AuthContext.js
+    │   ├── pages/
+    │   │   ├── Auth.css
+    │   │   ├── ForgotPassword.js
+    │   │   ├── home.js
+    │   │   ├── Login.js
+    │   │   └── Register.js
+    │   ├── app.jsx
+    │   ├── index.js
+    │   └── index.css
+    └── package.json
 ```
 
 ## Development
