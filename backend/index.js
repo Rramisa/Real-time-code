@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const fileRoutes = require('./routes/fileRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ connectToDatabase().catch((err) => console.error('MongoDB connection error:', er
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', fileRoutes);
+app.use('/api/messages', messageRoutes);
 
 
 const PORT = process.env.PORT || 5001;

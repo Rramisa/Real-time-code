@@ -3,6 +3,7 @@ import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import MessagePanel from './MessagePanel';
 
 const VSCodeLayout = () => {
   const [treeData, setTreeData] = useState([]);
@@ -10,6 +11,7 @@ const VSCodeLayout = () => {
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showMessagePanel, setShowMessagePanel] = useState(false);
   const autoSaveTimeoutRef = useRef(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -352,6 +354,19 @@ const VSCodeLayout = () => {
     fetchTree();
   }, [fetchTree]);
 
+  // Debug currentFile changes
+  useEffect(() => {
+    console.log('VSCodeLayout - currentFile changed:', currentFile);
+    if (currentFile) {
+      console.log('Current file details:', {
+        id: currentFile.id,
+        _id: currentFile._id,
+        name: currentFile.name,
+        type: currentFile.type
+      });
+    }
+  }, [currentFile]);
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', color: 'white' }}>
       {/* Top Navigation Bar */}
@@ -370,6 +385,42 @@ const VSCodeLayout = () => {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => {
+              console.log('Discussion button clicked, currentFile:', currentFile);
+              if (!currentFile) {
+                toast.error('Please select a file first to start a discussion');
+                return;
+              }
+              setShowMessagePanel(!showMessagePanel);
+            }}
+            style={{
+              backgroundColor: currentFile ? '#007acc' : '#404040',
+              border: 'none',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              cursor: currentFile ? 'pointer' : 'not-allowed',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => {
+              console.log('Button hover - currentFile:', currentFile);
+              if (currentFile) {
+                e.target.style.backgroundColor = '#005a9e';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (currentFile) {
+                e.target.style.backgroundColor = '#007acc';
+              }
+            }}
+            title={currentFile ? 'Open file discussion' : 'Select a file first to discuss'}
+          >
+            💬 Discussion
+          </button>
           <span style={{ color: '#888', fontSize: '12px' }}>Welcome, {user?.username || user?.email}</span>
           <button
             onClick={() => {
@@ -468,6 +519,13 @@ const VSCodeLayout = () => {
         )}
       </div>
       </div>
+
+      {/* Message Panel */}
+      <MessagePanel
+        fileId={currentFile?.id || currentFile?._id}
+        isOpen={showMessagePanel}
+        onClose={() => setShowMessagePanel(false)}
+      />
     </div>
   );
 };
@@ -935,6 +993,7 @@ const FileExplorer = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

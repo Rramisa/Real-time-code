@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get('/user/profile', authenticateToken, getProfile);
 router.put('/user/profile', authenticateToken, updateProfile);
+router.get('/users', authenticateToken, listUsers);
 
 // Admin/dev routes
 router.delete('/admin/delete-user/:userId', deleteUser);
