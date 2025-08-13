@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import MessagePanel from './MessagePanel';
+import SyntaxAwareEditor from './SyntaxAwareEditor';
+import ErrorPanel from './ErrorPanel';
 
 const VSCodeLayout = () => {
   const [treeData, setTreeData] = useState([]);
@@ -12,7 +13,10 @@ const VSCodeLayout = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showMessagePanel, setShowMessagePanel] = useState(false);
+  const [showErrorPanel, setShowErrorPanel] = useState(false);
+  const [validationState, setValidationState] = useState({ errors: 0, warnings: 0, markers: [] });
   const autoSaveTimeoutRef = useRef(null);
+  const editorRef = useRef(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -386,6 +390,34 @@ const VSCodeLayout = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
+            onClick={() => setShowErrorPanel(!showErrorPanel)}
+            style={{
+              backgroundColor: (validationState.errors > 0 || validationState.warnings > 0) ? '#f85149' : '#404040',
+              border: 'none',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => {
+              if (validationState.errors > 0 || validationState.warnings > 0) {
+                e.target.style.backgroundColor = '#d73a49';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (validationState.errors > 0 || validationState.warnings > 0) {
+                e.target.style.backgroundColor = '#f85149';
+              }
+            }}
+            title="View syntax errors and warnings"
+          >
+            ⚠️ Problems ({validationState.errors + validationState.warnings})
+          </button>
+          <button
             onClick={() => {
               console.log('Discussion button clicked, currentFile:', currentFile);
               if (!currentFile) {
@@ -475,32 +507,43 @@ const VSCodeLayout = () => {
               borderBottom: '1px solid #3e3e42',
               display: 'flex',
               alignItems: 'center',
-              paddingLeft: '16px'
+              justifyContent: 'space-between',
+              paddingLeft: '16px',
+              paddingRight: '16px'
             }}>
               <span style={{ fontSize: '14px', color: 'white' }}>
                 {currentFile.name}
                 {hasUnsavedChanges && <span style={{ color: '#ff9500', marginLeft: '4px' }}>●</span>}
               </span>
+              
+              {/* Validation Status */}
+              {(validationState.errors > 0 || validationState.warnings > 0) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+                  {validationState.errors > 0 && (
+                    <span style={{ color: '#f85149', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '10px' }}>●</span>
+                      {validationState.errors}
+                    </span>
+                  )}
+                  {validationState.warnings > 0 && (
+                    <span style={{ color: '#ff9500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '10px' }}>●</span>
+                      {validationState.warnings}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Monaco Editor */}
+            {/* Syntax Aware Editor */}
             <div style={{ flex: 1 }}>
-              <Editor
-                height="100%"
-                language={getLanguageFromExtension(currentFile.name)}
+              <SyntaxAwareEditor
                 value={currentFile.content}
-                theme="vs-dark"
                 onChange={handleContentChange}
-                options={{
-                  fontSize: 14,
-                  minimap: { enabled: true },
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  tabSize: 2,
-                  wordWrap: 'on',
-                  lineNumbers: 'on',
-                  renderWhitespace: 'selection'
-                }}
+                language={getLanguageFromExtension(currentFile.name)}
+                theme="vs-dark"
+                onValidationChange={setValidationState}
+                ref={editorRef}
               />
             </div>
           </>
@@ -525,6 +568,24 @@ const VSCodeLayout = () => {
         fileId={currentFile?.id || currentFile?._id}
         isOpen={showMessagePanel}
         onClose={() => setShowMessagePanel(false)}
+      />
+
+      {/* Error Panel */}
+      <ErrorPanel
+        isVisible={showErrorPanel}
+        onClose={() => setShowErrorPanel(false)}
+        errors={validationState.markers.filter(m => m.severity === 1)} // Monaco uses 1 for errors
+        warnings={validationState.markers.filter(m => m.severity === 2)} // Monaco uses 2 for warnings
+        onErrorClick={(issue) => {
+          // Navigate to the error in the editor
+          if (editorRef.current) {
+            editorRef.current.setPosition({
+              lineNumber: issue.line,
+              column: issue.column || 1
+            });
+            editorRef.current.focus();
+          }
+        }}
       />
     </div>
   );
