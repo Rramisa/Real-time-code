@@ -262,9 +262,9 @@ CSE471_Group8/
 
 ## Team Members
 
-- **Sumonta** - Project Lead, Backend Development, Authentication System
-- **Team Member 2** - Frontend Development, UI/UX Design
-- **Team Member 3** - Database Design, File Management System
+- **Sumonta**
+- **Sadar**
+- **Ramisa** 
 
 ## Troubleshooting
 
