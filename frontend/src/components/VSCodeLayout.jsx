@@ -26,6 +26,12 @@ const VSCodeLayout = () => {
   const fetchTree = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        toast.error('Authentication required');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/tree`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -52,6 +58,10 @@ const VSCodeLayout = () => {
   const fetchFile = async (fileId) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/files/${fileId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,

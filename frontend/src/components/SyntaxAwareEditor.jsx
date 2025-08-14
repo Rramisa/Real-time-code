@@ -19,69 +19,97 @@ const SyntaxAwareEditor = React.forwardRef(({
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [currentError, setCurrentError] = useState(null);
+  const [editorError, setEditorError] = useState(null);
 
   // Initialize Monaco and validation provider
   const handleEditorDidMount = (editor, monaco) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    
-    // Forward the ref
-    if (ref) {
-      ref.current = editor;
-    }
-
-    // Set up validation and error counting
-    const updateValidation = () => {
-      // Set validation markers
-      setValidationMarkers(editor, monaco, language);
+    try {
+      editorRef.current = editor;
+      monacoRef.current = monaco;
       
-      // Update error counts with a small delay to ensure markers are set
-      setTimeout(() => {
-        const model = editor.getModel();
-        if (model) {
-          const markers = monaco.editor.getModelMarkers({ resource: model.uri });
-          const errors = markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length;
-          const warnings = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
-          
-          setErrorCount(errors);
-          setWarningCount(warnings);
-          
-          if (onValidationChange) {
-            onValidationChange({ errors, warnings, markers });
-          }
-        }
-      }, 50); // Small delay to ensure markers are processed
-    };
-
-    // Listen for model changes to update validation
-    editor.onDidChangeModelContent(() => {
-      setTimeout(updateValidation, 100); // Small delay to ensure content is updated
-    });
-
-    // Listen for marker changes to update error counts
-    monaco.editor.onDidChangeMarkers((e) => {
-      if (e.resource.toString() === editor.getModel().uri.toString()) {
-        const markers = monaco.editor.getModelMarkers({ resource: editor.getModel().uri });
-        const errors = markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length;
-        const warnings = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
-        
-        setErrorCount(errors);
-        setWarningCount(warnings);
-        
-        if (onValidationChange) {
-          onValidationChange({ errors, warnings, markers });
-        }
+      // Forward the ref
+      if (ref) {
+        ref.current = editor;
       }
-    });
 
-    // Initial validation
-    setTimeout(updateValidation, 100);
+      // Set up validation and error counting
+      const updateValidation = () => {
+        try {
+          // Set validation markers
+          setValidationMarkers(editor, monaco, language);
+          
+          // Update error counts with a small delay to ensure markers are set
+          setTimeout(() => {
+            try {
+              const model = editor.getModel();
+              if (model) {
+                const markers = monaco.editor.getModelMarkers({ resource: model.uri });
+                const errors = markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length;
+                const warnings = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
+                
+                setErrorCount(errors);
+                setWarningCount(warnings);
+                
+                if (onValidationChange) {
+                  onValidationChange({ errors, warnings, markers });
+                }
+              }
+            } catch (error) {
+              console.error('Error updating validation:', error);
+            }
+          }, 50); // Small delay to ensure markers are processed
+        } catch (error) {
+          console.error('Error in updateValidation:', error);
+        }
+      };
+
+      // Listen for model changes to update validation
+      editor.onDidChangeModelContent(() => {
+        setTimeout(updateValidation, 100); // Small delay to ensure content is updated
+      });
+
+      // Listen for marker changes to update error counts
+      monaco.editor.onDidChangeMarkers((e) => {
+        try {
+          if (e.resource.toString() === editor.getModel().uri.toString()) {
+            const markers = monaco.editor.getModelMarkers({ resource: editor.getModel().uri });
+            const errors = markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length;
+            const warnings = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
+            
+            setErrorCount(errors);
+            setWarningCount(warnings);
+            
+            if (onValidationChange) {
+              onValidationChange({ errors, warnings, markers });
+            }
+          }
+        } catch (error) {
+          console.error('Error in marker change handler:', error);
+        }
+      });
+
+      // Initial validation
+      setTimeout(updateValidation, 100);
+    } catch (error) {
+      console.error('Error in handleEditorDidMount:', error);
+      setEditorError(error);
+    }
+  };
+
+  // Handle editor errors
+  const handleEditorError = (error) => {
+    console.error('Monaco Editor error:', error);
+    setEditorError(error);
   };
 
   // Update validation when language changes
   useEffect(() => {
     if (editorRef.current && monacoRef.current && language) {
-      setValidationMarkers(editorRef.current, monacoRef.current, language);
+      try {
+        setValidationMarkers(editorRef.current, monacoRef.current, language);
+      } catch (error) {
+        console.error('Error updating validation for language change:', error);
+      }
     }
   }, [language]);
 
@@ -107,38 +135,82 @@ const SyntaxAwareEditor = React.forwardRef(({
 
   // Handle content changes
   const handleChange = (value, event) => {
-    if (onChange) {
-      onChange(value, event);
+    try {
+      if (onChange) {
+        onChange(value, event);
+      }
+    } catch (error) {
+      console.error('Error in handleChange:', error);
     }
   };
 
   // Show error hints when user hovers over error markers
   const handleEditorMouseMove = (event) => {
-    if (!editorRef.current || !monacoRef.current) return;
+    try {
+      if (!editorRef.current || !monacoRef.current) return;
 
-    const position = editorRef.current.getPosition();
-    const model = editorRef.current.getModel();
-    
-    if (model) {
-      const markers = monacoRef.current.editor.getModelMarkers({ resource: model.uri });
-      const markerAtPosition = markers.find(marker => 
-        position.lineNumber >= marker.startLineNumber && 
-        position.lineNumber <= marker.endLineNumber &&
-        position.column >= marker.startColumn && 
-        position.column <= marker.endColumn
-      );
+      const position = editorRef.current.getPosition();
+      const model = editorRef.current.getModel();
+      
+      if (model) {
+        const markers = monacoRef.current.editor.getModelMarkers({ resource: model.uri });
+        const markerAtPosition = markers.find(marker => 
+          position.lineNumber >= marker.startLineNumber && 
+          position.lineNumber <= marker.endLineNumber &&
+          position.column >= marker.startColumn && 
+          position.column <= marker.endColumn
+        );
 
-      if (markerAtPosition) {
-        // Show tooltip with error information
-        setCurrentError(markerAtPosition);
-        setTooltipPosition({ x: event.clientX, y: event.clientY });
-        setTooltipVisible(true);
-      } else {
-        setTooltipVisible(false);
-        setCurrentError(null);
+        if (markerAtPosition) {
+          // Show tooltip with error information
+          setCurrentError(markerAtPosition);
+          setTooltipPosition({ x: event.clientX, y: event.clientY });
+          setTooltipVisible(true);
+        } else {
+          setTooltipVisible(false);
+          setCurrentError(null);
+        }
       }
+    } catch (error) {
+      console.error('Error in handleEditorMouseMove:', error);
     }
   };
+
+  // Show error state if editor failed to load
+  if (editorError) {
+    return (
+      <div style={{
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        backgroundColor: '#1e1e1e',
+        color: 'white',
+        padding: '20px'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
+        <h3 style={{ color: '#f85149', margin: '0 0 16px 0' }}>Editor Error</h3>
+        <p style={{ color: '#888', margin: '0 0 16px 0', textAlign: 'center' }}>
+          Failed to load the code editor. Please refresh the page to try again.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#007acc',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Refresh Page
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', height: '100%' }}>
@@ -180,6 +252,7 @@ const SyntaxAwareEditor = React.forwardRef(({
         theme={theme}
         onChange={handleChange}
         onMount={handleEditorDidMount}
+        onError={handleEditorError}
         options={enhancedOptions}
         onMouseMove={handleEditorMouseMove}
       />

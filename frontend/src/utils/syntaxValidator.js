@@ -42,29 +42,85 @@ const syntaxPatterns = {
   ],
   python: [
     {
-      pattern: /def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*:$/m,
-      message: 'Function definition should be followed by code block',
-      severity: 'Error'
+      pattern: /^if\s+[^:]*$/m,
+      message: 'Missing colon after if statement',
+      severity: 'Error',
+      code: 'missing-colon'
     },
     {
-      pattern: /if\s+[^:]*:$/m,
-      message: 'If statement should be followed by code block',
-      severity: 'Error'
+      pattern: /^for\s+[^:]*$/m,
+      message: 'Missing colon after for statement',
+      severity: 'Error',
+      code: 'missing-colon'
     },
     {
-      pattern: /for\s+[^:]*:$/m,
-      message: 'For loop should be followed by code block',
-      severity: 'Error'
+      pattern: /^while\s+[^:]*$/m,
+      message: 'Missing colon after while statement',
+      severity: 'Error',
+      code: 'missing-colon'
     },
     {
-      pattern: /while\s+[^:]*:$/m,
-      message: 'While loop should be followed by code block',
-      severity: 'Error'
+      pattern: /^def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*$/m,
+      message: 'Missing colon after function definition',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^elif\s+[^:]*$/m,
+      message: 'Missing colon after elif statement',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^else\s*$/m,
+      message: 'Missing colon after else statement',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^try\s*$/m,
+      message: 'Missing colon after try statement',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^except\s*$/m,
+      message: 'Missing colon after except statement',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^finally\s*$/m,
+      message: 'Missing colon after finally statement',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^with\s+[^:]*$/m,
+      message: 'Missing colon after with statement',
+      severity: 'Error',
+      code: 'missing-colon'
+    },
+    {
+      pattern: /^class\s+[a-zA-Z_][a-zA-Z0-9_]*\s*$/m,
+      message: 'Missing colon after class definition',
+      severity: 'Error',
+      code: 'missing-colon'
     },
     {
       pattern: /print\s*\([^)]*\)/g,
       message: 'Consider using logging instead of print in production',
       severity: 'Info'
+    },
+    {
+      pattern: /^import\s+[^;]*$/m,
+      message: 'Invalid import statement',
+      severity: 'Error'
+    },
+    {
+      pattern: /^from\s+[^;]*$/m,
+      message: 'Invalid from import statement',
+      severity: 'Error'
     }
   ],
   java: [
@@ -146,48 +202,58 @@ const getLanguagePatterns = (language) => {
 
 // Validate syntax and return markers
 export const validateSyntax = (content, language) => {
-  const patterns = getLanguagePatterns(language);
-  const markers = [];
-  const lines = content.split('\n');
+  try {
+    const patterns = getLanguagePatterns(language);
+    const markers = [];
+    const lines = content.split('\n');
 
-  // For Python, use a more sophisticated validation
-  if (language.toLowerCase() === 'python') {
-    return validatePythonSyntax(content);
-  }
-  
-  // For JavaScript, use a more sophisticated validation
-  if (language.toLowerCase() === 'javascript') {
-    return validateJavaScriptSyntax(content);
-  }
+    // For Python, use a more sophisticated validation
+    if (language.toLowerCase() === 'python') {
+      return validatePythonSyntax(content);
+    }
+    
+    // For JavaScript, use a more sophisticated validation
+    if (language.toLowerCase() === 'javascript') {
+      return validateJavaScriptSyntax(content);
+    }
 
-  lines.forEach((line, lineIndex) => {
-    patterns.forEach(pattern => {
-      const matches = line.match(pattern.pattern);
-      if (matches) {
-        markers.push({
-          startLineNumber: lineIndex + 1,
-          startColumn: 1,
-          endLineNumber: lineIndex + 1,
-          endColumn: line.length + 1,
-          message: pattern.message,
-          severity: pattern.severity,
-          code: 'syntax-error'
-        });
-      }
+    lines.forEach((line, lineIndex) => {
+      patterns.forEach(pattern => {
+        try {
+          const matches = line.match(pattern.pattern);
+          if (matches) {
+            markers.push({
+              startLineNumber: lineIndex + 1,
+              startColumn: 1,
+              endLineNumber: lineIndex + 1,
+              endColumn: line.length + 1,
+              message: pattern.message,
+              severity: pattern.severity,
+              code: 'syntax-error'
+            });
+          }
+        } catch (error) {
+          console.error('Error in pattern matching:', error);
+        }
+      });
     });
-  });
 
-  // Check for common structural issues
-  const structuralErrors = checkStructuralIssues(content, language);
-  markers.push(...structuralErrors);
+    // Check for common structural issues
+    const structuralErrors = checkStructuralIssues(content, language);
+    markers.push(...structuralErrors);
 
-  return markers;
+    return markers;
+  } catch (error) {
+    console.error('Error in validateSyntax:', error);
+    return []; // Return empty array instead of throwing
+  }
 };
 
 // Python-specific syntax validation
 const validatePythonSyntax = (content) => {
   const markers = [];
   const lines = content.split('\n');
+  const patterns = getLanguagePatterns('python');
   
   lines.forEach((line, lineIndex) => {
     const trimmedLine = line.trim();
@@ -197,17 +263,28 @@ const validatePythonSyntax = (content) => {
       return;
     }
     
-    // Check for incomplete function definitions
-    if (trimmedLine.match(/^def\s+\w+\s*\([^)]*\)\s*:$/)) {
-      // This is a valid function definition, no error
-    }
-    // Check for incomplete if/for/while statements
-    else if (trimmedLine.match(/^(if|for|while)\s+[^:]*:$/)) {
-      // This is a valid control structure, no error
-    }
-    // Check for truly unclosed strings (more sophisticated)
-    else if (trimmedLine.includes('"') || trimmedLine.includes("'")) {
-      // Only check for unclosed strings if the line actually contains quotes
+    // Check for missing colons and other syntax errors
+    patterns.forEach(pattern => {
+      try {
+        const matches = line.match(pattern.pattern);
+        if (matches) {
+          markers.push({
+            startLineNumber: lineIndex + 1,
+            startColumn: 1,
+            endLineNumber: lineIndex + 1,
+            endColumn: line.length + 1,
+            message: pattern.message,
+            severity: pattern.severity,
+            code: 'syntax-error'
+          });
+        }
+      } catch (error) {
+        console.error('Error in Python pattern matching:', error);
+      }
+    });
+    
+    // Check for unclosed strings (more sophisticated)
+    if (trimmedLine.includes('"') || trimmedLine.includes("'")) {
       const quoteCount = (trimmedLine.match(/['"]/g) || []).length;
       if (quoteCount % 2 !== 0) {
         markers.push({
@@ -393,6 +470,7 @@ const checkStructuralIssues = (content, language) => {
 export const getErrorHints = (errorCode) => {
   const hints = {
     'syntax-error': 'Check the syntax of this line. Common issues include missing semicolons, brackets, or quotes.',
+    'missing-colon': 'Add a colon (:) at the end of this statement. In Python, control structures like if, for, while, def, class, etc. must end with a colon.',
     'unexpected-brace': 'You have an extra closing brace. Check if you have an opening brace that matches this one.',
     'unexpected-bracket': 'You have an extra closing bracket. Check if you have an opening bracket that matches this one.',
     'unexpected-paren': 'You have an extra closing parenthesis. Check if you have an opening parenthesis that matches this one.',
@@ -422,23 +500,28 @@ export const createValidationProvider = (language) => {
 
 // Function to manually validate and set markers
 export const setValidationMarkers = (editor, monaco, language) => {
-  if (!editor || !monaco) return;
-  
-  const model = editor.getModel();
-  if (!model) return;
-  
-  const content = model.getValue();
-  const markers = validateSyntax(content, language);
-  
-  // Convert string severity to Monaco severity values
-  const convertedMarkers = markers.map(marker => ({
-    ...marker,
-    severity: marker.severity === 'Error' ? monaco.MarkerSeverity.Error :
-              marker.severity === 'Warning' ? monaco.MarkerSeverity.Warning :
-              marker.severity === 'Info' ? monaco.MarkerSeverity.Info :
-              monaco.MarkerSeverity.Error
-  }));
-  
-  // Set the markers on the model
-  monaco.editor.setModelMarkers(model, 'syntax-validator', convertedMarkers);
+  try {
+    if (!editor || !monaco) return;
+    
+    const model = editor.getModel();
+    if (!model) return;
+    
+    const content = model.getValue();
+    const markers = validateSyntax(content, language);
+    
+    // Convert string severity to Monaco severity values
+    const convertedMarkers = markers.map(marker => ({
+      ...marker,
+      severity: marker.severity === 'Error' ? monaco.MarkerSeverity.Error :
+                marker.severity === 'Warning' ? monaco.MarkerSeverity.Warning :
+                marker.severity === 'Info' ? monaco.MarkerSeverity.Info :
+                monaco.MarkerSeverity.Error
+    }));
+    
+    // Set the markers on the model
+    monaco.editor.setModelMarkers(model, 'syntax-validator', convertedMarkers);
+  } catch (error) {
+    console.error('Error in setValidationMarkers:', error);
+    // Don't throw the error to prevent script errors
+  }
 };
