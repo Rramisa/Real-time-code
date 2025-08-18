@@ -7,6 +7,7 @@ const userRoutes = require('./routes/userRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const syntaxRoutes = require('./routes/syntaxRoutes');
+const presenceRoutes = require('./routes/presenceRoutes');
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/api', userRoutes);
 app.use('/api', fileRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/syntax', syntaxRoutes);
+app.use('/api', presenceRoutes);
 
 
 const PORT = process.env.PORT || 5001;

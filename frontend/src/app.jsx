@@ -11,6 +11,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 import VSCodeLayout from './components/VSCodeLayout';
 import { Toaster } from 'react-hot-toast';
+import Status from './pages/Status';
 
 // Import verification for development
 if (process.env.NODE_ENV === 'development') {
@@ -54,6 +55,14 @@ function App() {
             <Route path="/login" element={<Login/>} />
             <Route path="/register" element={<Register/>} />
             <Route path="/forgot-password" element={<ForgotPassword/>} />
+            <Route 
+              path="/status" 
+              element={
+                <ProtectedRoute>
+                  <Status/>
+                </ProtectedRoute>
+              } 
+            />
                       <Route 
               path="/editor" 
               element={

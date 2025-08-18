@@ -15,6 +15,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
 
+  // Tiny inline presence helpers (keep code together here)
+  const presenceOnline = async (authToken) => {
+    try {
+      await fetch('http://localhost:5001/api/presence/online', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const presenceOffline = async (authToken, { keepalive = false } = {}) => {
+    try {
+      await fetch('http://localhost:5001/api/presence/offline', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({}),
+        keepalive
+      });
+    } catch (e) {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (token) {
       // Verify token and get user data
@@ -66,6 +98,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         setToken(data.token);
         setUser(data.user);
+        // Mark online immediately
+        presenceOnline(data.token);
         return { success: true, data };
       } else {
         return { success: false, message: data.message };
@@ -165,11 +199,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const existingToken = localStorage.getItem('token');
+    if (existingToken) {
+      // Mark offline immediately
+      await presenceOffline(existingToken);
+    }
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
   };
+
+  // Mark offline on tab close/refresh
+  useEffect(() => {
+    const handler = () => {
+      const existingToken = localStorage.getItem('token');
+      if (existingToken) {
+        // Use keepalive so the request can complete during unload
+        presenceOffline(existingToken, { keepalive: true });
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   const updateProfile = async (profileData) => {
     try {

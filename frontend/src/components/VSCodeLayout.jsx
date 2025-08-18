@@ -463,6 +463,26 @@ const VSCodeLayout = () => {
           >
             💬 Discussion
           </button>
+          <button
+            onClick={() => navigate('/status')}
+            style={{
+              backgroundColor: '#404040',
+              border: 'none',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
+            onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
+            title="View user status"
+          >
+            📊 Status
+          </button>
           <span style={{ color: '#888', fontSize: '12px' }}>Welcome, {user?.username || user?.email}</span>
           <button
             onClick={() => {
