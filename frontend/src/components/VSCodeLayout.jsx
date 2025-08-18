@@ -301,6 +301,87 @@ const VSCodeLayout = () => {
     }
   };
 
+  // Download helpers
+  const triggerBrowserDownload = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadZip = async (params = {}, filename = 'project.zip') => {
+    try {
+      const token = localStorage.getItem('token');
+      const query = new URLSearchParams(params).toString();
+      const url = `${API_BASE_URL}/api/download/zip${query ? `?${query}` : ''}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        // Try to parse error
+        let message = 'Failed to download ZIP';
+        try {
+          const err = await response.json();
+          message = err?.message || message;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      triggerBrowserDownload(blob, filename);
+    } catch (error) {
+      toast.error(error.message || 'Download failed');
+      throw error;
+    }
+  };
+
+  const downloadAllAsZip = async () => {
+    const input = window.prompt('Name for ZIP file:', 'project');
+    if (input === null) return; // cancelled
+    const safe = (input || '').trim() || 'project';
+    await downloadZip({}, `${safe}.zip`);
+  };
+
+  const downloadFolderAsZip = async (folderId, name) => {
+    await downloadZip({ folderId }, `${name || 'folder'}.zip`);
+  };
+
+  const downloadFileAsZip = async (fileId, name) => {
+    const base = (name || 'file').replace(/\/+$/,'');
+    await downloadZip({ fileId }, `${base}.zip`);
+  };
+
+  const downloadSingleFile = async (fileId, name) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/files/${fileId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        let message = 'Failed to download file';
+        try {
+          const err = await response.json();
+          message = err?.message || message;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      triggerBrowserDownload(blob, name || 'file');
+    } catch (error) {
+      toast.error(error.message || 'Download failed');
+      throw error;
+    }
+  };
+
   // Handle file selection
   const handleFileSelect = async (file) => {
     try {
@@ -524,6 +605,14 @@ const VSCodeLayout = () => {
         onRenameFile={renameFile}
         onRenameFolder={renameFolder}
         onRefresh={fetchTree}
+        onDownloadAll={downloadAllAsZip}
+        onDownloadItem={async (item) => {
+          if (item.type === 'folder') {
+            await downloadFolderAsZip(item.id, item.name);
+          } else {
+            await downloadSingleFile(item.id, item.name);
+          }
+        }}
       />
 
       {/* Editor Area */}
@@ -545,6 +634,25 @@ const VSCodeLayout = () => {
                 {currentFile.name}
                 {hasUnsavedChanges && <span style={{ color: '#ff9500', marginLeft: '4px' }}>●</span>}
               </span>
+              <div>
+                <button
+                  onClick={() => downloadSingleFile(currentFile.id || currentFile._id, currentFile.name)}
+                  style={{
+                    backgroundColor: '#404040',
+                    border: 'none',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
+                  onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
+                  title="Download this file"
+                >
+                  ⬇️ Download
+                </button>
+              </div>
               
               {/* Validation Status */}
               {(validationState.errors > 0 || validationState.warnings > 0) && (
@@ -635,7 +743,9 @@ const FileExplorer = ({
   onDeleteFolder,
   onRenameFile,
   onRenameFolder,
-  onRefresh 
+  onRefresh,
+  onDownloadAll,
+  onDownloadItem
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -796,6 +906,20 @@ const FileExplorer = ({
           <span>Explorer</span>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
+              onClick={onDownloadAll}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#cccccc',
+                cursor: 'pointer',
+                fontSize: '14px',
+                padding: '2px'
+              }}
+              title="Download All as ZIP"
+            >
+              ⬇️
+            </button>
+            <button
               onClick={() => handleCreateClick('file')}
               style={{
                 background: 'none',
@@ -901,6 +1025,17 @@ const FileExplorer = ({
             onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
           >
             Rename
+          </div>
+          <div
+            style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '14px' }}
+            onClick={() => {
+              onDownloadItem(contextMenu.item);
+              setContextMenu(null);
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#505050'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+          >
+            {contextMenu.item.type === 'folder' ? 'Download as ZIP' : 'Download'}
           </div>
           <div
             style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '14px', color: '#f85149' }}

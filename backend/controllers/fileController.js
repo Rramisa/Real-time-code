@@ -1,6 +1,8 @@
 const File = require('../models/File');
 const Folder = require('../models/Folder');
 const UserFile = require('../models/UserFile');
+const archiver = require('archiver');
+const path = require('path');
 
 // Create a new file
 async function createFile(req, res) {
@@ -437,3 +439,152 @@ module.exports = {
   renameFile,
   renameFolder
 };
+
+// Stream a ZIP file containing all files, a specific folder, or a single file
+async function downloadZip(req, res) {
+  try {
+    const { folderId = null, fileId = null } = req.query;
+
+    const posixJoin = (...parts) => parts.filter(Boolean).join('/');
+
+    // Helper to add a single file to archive
+    async function addSingleFileToArchive(archiveInstance, fileDoc, basePath = '') {
+      let userFile = await UserFile.findOne({ fileId: fileDoc._id });
+      const fileContent = userFile?.content || '';
+      const entryPath = basePath ? posixJoin(basePath, fileDoc.name) : fileDoc.name;
+      archiveInstance.append(fileContent, { name: entryPath });
+    }
+
+    // Helper to recursively add a folder's contents
+    async function addFolderToArchive(archiveInstance, folderObjectId, basePath = '') {
+      const folderDoc = await Folder.findById(folderObjectId);
+      const currentBase = basePath ? posixJoin(basePath, folderDoc.name) : folderDoc.name;
+
+      // Ensure folder entry exists (even if empty)
+      archiveInstance.append('', { name: `${currentBase}/` });
+
+      const childFolders = await Folder.find({ parentFolderId: folderObjectId }).sort({ name: 1 });
+      const childFiles = await File.find({ parentFolderId: folderObjectId }).sort({ name: 1 });
+
+      for (const fileDoc of childFiles) {
+        await addSingleFileToArchive(archiveInstance, fileDoc, currentBase);
+      }
+
+      for (const subFolder of childFolders) {
+        await addFolderToArchive(archiveInstance, subFolder._id, currentBase);
+      }
+    }
+
+    // Configure archive and headers
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', (err) => {
+      console.error('Zip archive error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Error creating ZIP archive' });
+      } else {
+        res.end();
+      }
+    });
+
+    // Decide filename and content scope
+    let downloadName = 'project';
+    if (fileId) {
+      const fileDoc = await File.findById(fileId);
+      if (!fileDoc) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+      const base = path.parse(fileDoc.name).name;
+      downloadName = `${base}`;
+    } else if (folderId) {
+      const folderDoc = await Folder.findById(folderId);
+      if (!folderDoc) {
+        return res.status(404).json({ message: 'Folder not found' });
+      }
+      downloadName = folderDoc.name || 'folder';
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}.zip"`);
+    archive.pipe(res);
+
+    // Populate archive content
+    if (fileId) {
+      const fileDoc = await File.findById(fileId);
+      await addSingleFileToArchive(archive, fileDoc);
+    } else if (folderId) {
+      await addFolderToArchive(archive, folderId);
+    } else {
+      // Add entire tree starting from root (parentFolderId = null)
+      const rootFolders = await Folder.find({ parentFolderId: null }).sort({ name: 1 });
+      const rootFiles = await File.find({ parentFolderId: null }).sort({ name: 1 });
+
+      // Put everything under a top-level folder for clarity
+      const topLevel = downloadName;
+
+      for (const fileDoc of rootFiles) {
+        await addSingleFileToArchive(archive, fileDoc, topLevel);
+      }
+
+      for (const folderDoc of rootFolders) {
+        await addFolderToArchive(archive, folderDoc._id, topLevel);
+      }
+    }
+
+    await archive.finalize();
+  } catch (error) {
+    console.error('Download ZIP error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
+
+module.exports.downloadZip = downloadZip;
+
+// Download a single file as raw content (no ZIP)
+async function downloadFile(req, res) {
+  try {
+    const { id } = req.params;
+    const fileDoc = await File.findById(id);
+    if (!fileDoc) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    const userFile = await UserFile.findOne({ fileId: id });
+    const content = userFile?.content || '';
+
+    // Basic mime type inference by extension
+    function getMimeFromName(filename) {
+      const ext = (filename.split('.').pop() || '').toLowerCase();
+      switch (ext) {
+        case 'js': return 'text/javascript; charset=utf-8';
+        case 'jsx': return 'text/javascript; charset=utf-8';
+        case 'ts': return 'application/typescript; charset=utf-8';
+        case 'tsx': return 'application/typescript; charset=utf-8';
+        case 'json': return 'application/json; charset=utf-8';
+        case 'html': return 'text/html; charset=utf-8';
+        case 'css': return 'text/css; charset=utf-8';
+        case 'md': return 'text/markdown; charset=utf-8';
+        case 'py': return 'text/x-python; charset=utf-8';
+        case 'java': return 'text/x-java-source; charset=utf-8';
+        case 'c': return 'text/x-c; charset=utf-8';
+        case 'cpp': return 'text/x-c++src; charset=utf-8';
+        case 'rb': return 'text/x-ruby; charset=utf-8';
+        case 'go': return 'text/x-go; charset=utf-8';
+        case 'rs': return 'text/rust; charset=utf-8';
+        case 'kt': return 'text/x-kotlin; charset=utf-8';
+        case 'swift': return 'text/swift; charset=utf-8';
+        case 'sql': return 'application/sql; charset=utf-8';
+        default: return 'text/plain; charset=utf-8';
+      }
+    }
+
+    const mime = getMimeFromName(fileDoc.name);
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileDoc.name}"`);
+    return res.send(content);
+  } catch (error) {
+    console.error('Download file error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
+
+module.exports.downloadFile = downloadFile;

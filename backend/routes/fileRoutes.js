@@ -9,7 +9,9 @@ const {
   deleteFile,
   deleteFolder,
   renameFile,
-  renameFolder
+  renameFolder,
+  downloadZip,
+  downloadFile
 } = require('../controllers/fileController');
 
 const router = express.Router();
@@ -27,5 +29,11 @@ router.patch('/files/:id/rename', renameFile);  // Rename file
 router.delete('/files/:id', deleteFile);        // Delete file
 router.patch('/folders/:id/rename', renameFolder); // Rename folder
 router.delete('/folders/:id', deleteFolder);    // Delete folder recursively
+
+// Download files as ZIP
+router.get('/download/zip', downloadZip); // Optional query: ?folderId=... or ?fileId=...
+
+// Download a single file (raw)
+router.get('/files/:id/download', downloadFile);
 
 module.exports = router;
