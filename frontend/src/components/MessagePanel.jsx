@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
-const MessagePanel = ({ fileId, isOpen, onClose }) => {
+const MessagePanel = ({ fileId, fileName, isOpen, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -274,7 +274,7 @@ const MessagePanel = ({ fileId, isOpen, onClose }) => {
           </button>
         </div>
         <div style={{ fontSize: '10px', color: '#888' }}>
-          File-based Discussion | File: {fileId}
+          File-based Discussion | File: {fileName || fileId}
         </div>
       </div>
 

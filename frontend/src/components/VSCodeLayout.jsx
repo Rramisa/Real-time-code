@@ -704,6 +704,7 @@ const VSCodeLayout = () => {
       {/* Message Panel */}
       <MessagePanel
         fileId={currentFile?.id || currentFile?._id}
+        fileName={currentFile?.name}
         isOpen={showMessagePanel}
         onClose={() => setShowMessagePanel(false)}
       />
