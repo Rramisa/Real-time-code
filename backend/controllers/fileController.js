@@ -440,14 +440,12 @@ module.exports = {
   renameFolder
 };
 
-// Stream a ZIP file containing all files, a specific folder, or a single file
 async function downloadZip(req, res) {
   try {
     const { folderId = null, fileId = null } = req.query;
 
     const posixJoin = (...parts) => parts.filter(Boolean).join('/');
 
-    // Helper to add a single file to archive
     async function addSingleFileToArchive(archiveInstance, fileDoc, basePath = '') {
       let userFile = await UserFile.findOne({ fileId: fileDoc._id });
       const fileContent = userFile?.content || '';
@@ -455,12 +453,10 @@ async function downloadZip(req, res) {
       archiveInstance.append(fileContent, { name: entryPath });
     }
 
-    // Helper to recursively add a folder's contents
     async function addFolderToArchive(archiveInstance, folderObjectId, basePath = '') {
       const folderDoc = await Folder.findById(folderObjectId);
       const currentBase = basePath ? posixJoin(basePath, folderDoc.name) : folderDoc.name;
 
-      // Ensure folder entry exists (even if empty)
       archiveInstance.append('', { name: `${currentBase}/` });
 
       const childFolders = await Folder.find({ parentFolderId: folderObjectId }).sort({ name: 1 });
