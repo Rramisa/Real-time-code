@@ -32,6 +32,61 @@ const SyntaxAwareEditor = React.forwardRef(({
         ref.current = editor;
       }
 
+      // Define two additional custom themes (Dracula and Retro)
+      try {
+        monaco.editor.defineTheme('dracula', {
+          base: 'vs-dark',
+          inherit: true,
+          rules: [
+            { token: '', foreground: 'f8f8f2', background: '282a36' },
+            { token: 'comment', foreground: '6272a4' },
+            { token: 'keyword', foreground: 'ff79c6' },
+            { token: 'number', foreground: 'bd93f9' },
+            { token: 'string', foreground: 'f1fa8c' },
+            { token: 'type', foreground: '8be9fd' },
+            { token: 'delimiter', foreground: 'f8f8f2' }
+          ],
+          colors: {
+            'editor.background': '#282a36',
+            'editor.foreground': '#f8f8f2',
+            'editorLineNumber.foreground': '#6272a4',
+            'editorLineNumber.activeForeground': '#f8f8f2',
+            'editorCursor.foreground': '#ffb86c',
+            'editor.selectionBackground': '#44475a',
+            'editor.inactiveSelectionBackground': '#44475a88',
+            'editor.lineHighlightBackground': '#3a3f5a',
+            'editorIndentGuide.background': '#44475a'
+          }
+        });
+
+        monaco.editor.defineTheme('retro', {
+          base: 'vs-dark',
+          inherit: true,
+          rules: [
+            { token: '', foreground: '33ff66', background: '000000' },
+            { token: 'comment', foreground: '1aff1a' },
+            { token: 'keyword', foreground: '00ffff' },
+            { token: 'number', foreground: '00ffff' },
+            { token: 'string', foreground: 'ffff00' },
+            { token: 'type', foreground: '33ff66' }
+          ],
+          colors: {
+            'editor.background': '#000000',
+            'editor.foreground': '#33ff66',
+            'editorLineNumber.foreground': '#1aff1a',
+            'editorLineNumber.activeForeground': '#33ff66',
+            'editorCursor.foreground': '#33ff66',
+            'editor.selectionBackground': '#003300',
+            'editor.inactiveSelectionBackground': '#00330099',
+            'editor.lineHighlightBackground': '#001a00',
+            'editorIndentGuide.background': '#003300'
+          }
+        });
+      } catch (e) {
+        // Theme definition best-effort; continue even if it fails
+        console.warn('Theme definition failed:', e);
+      }
+
       // Set up validation and error counting
       const updateValidation = () => {
         try {

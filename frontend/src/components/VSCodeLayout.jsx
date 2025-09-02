@@ -538,6 +538,8 @@ const VSCodeLayout = () => {
             <option value="vs-dark">Dark</option>
             <option value="vs-light">Light</option>
             <option value="hc-black">High Contrast</option>
+            <option value="dracula">Dracula</option>
+            <option value="retro">Retro</option>
           </select>
           <button
             onClick={() => setShowErrorPanel(!showErrorPanel)}
