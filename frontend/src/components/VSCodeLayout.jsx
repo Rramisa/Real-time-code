@@ -956,7 +956,7 @@ const VSCodeLayout = () => {
               <label style={{ color: '#ccc', fontSize: '12px' }}>Word Wrap
                 <select value={editorOptions.wordWrap}
                   onChange={(e) => setEditorOptions({ ...editorOptions, wordWrap: e.target.value })}
-                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid '#3e3e42', color: 'white', borderRadius: '4px' }}>
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }}>
                   <option value="off">Off</option>
                   <option value="on">On</option>
                   <option value="wordWrapColumn">Column</option>
