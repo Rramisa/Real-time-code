@@ -15,6 +15,7 @@ const VSCodeLayout = () => {
   const [showMessagePanel, setShowMessagePanel] = useState(false);
   const [showErrorPanel, setShowErrorPanel] = useState(false);
   const [validationState, setValidationState] = useState({ errors: 0, warnings: 0, markers: [] });
+  const [runOutput, setRunOutput] = useState({ stdout: '', stderr: '', exitCode: null, timedOut: false, running: false });
   const autoSaveTimeoutRef = useRef(null);
   const editorRef = useRef(null);
   const { user, logout } = useAuth();
@@ -444,6 +445,41 @@ const VSCodeLayout = () => {
     return languageMap[extension] || 'plaintext';
   };
 
+  const runCurrentFile = async () => {
+    if (!currentFile) return;
+    const language = getLanguageFromExtension(currentFile.name);
+    const supported = ['javascript', 'python'];
+    if (!supported.includes(language)) {
+      toast.error(`Run not supported for ${language}`);
+      return;
+    }
+    try {
+      setRunOutput(prev => ({ ...prev, running: true }));
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/exec/run`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ language, code: currentFile.content || '' })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || 'Execution failed');
+      }
+      setRunOutput({
+        stdout: data.stdout || '',
+        stderr: data.stderr || '',
+        exitCode: data.exitCode,
+        timedOut: !!data.timedOut,
+        running: false
+      });
+    } catch (err) {
+      setRunOutput({ stdout: '', stderr: String(err.message || err), exitCode: null, timedOut: false, running: false });
+    }
+  };
+
   // Initial load
   useEffect(() => {
     fetchTree();
@@ -634,7 +670,7 @@ const VSCodeLayout = () => {
                 {currentFile.name}
                 {hasUnsavedChanges && <span style={{ color: '#ff9500', marginLeft: '4px' }}>●</span>}
               </span>
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
                   onClick={() => downloadSingleFile(currentFile.id || currentFile._id, currentFile.name)}
                   style={{
@@ -651,6 +687,24 @@ const VSCodeLayout = () => {
                   title="Download this file"
                 >
                   ⬇️ Download
+                </button>
+                <button
+                  onClick={runCurrentFile}
+                  style={{
+                    backgroundColor: currentFile ? '#0e639c' : '#404040',
+                    border: 'none',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    cursor: currentFile ? 'pointer' : 'not-allowed',
+                    fontSize: '12px'
+                  }}
+                  onMouseEnter={(e) => { if (currentFile) e.target.style.backgroundColor = '#0b4f7a'; }}
+                  onMouseLeave={(e) => { if (currentFile) e.target.style.backgroundColor = '#0e639c'; }}
+                  title="Run this file"
+                  disabled={!currentFile}
+                >
+                  ▶️ Run
                 </button>
               </div>
               
@@ -683,6 +737,26 @@ const VSCodeLayout = () => {
                 onValidationChange={setValidationState}
                 ref={editorRef}
               />
+            </div>
+
+            {/* Output Panel */}
+            <div style={{ height: '160px', borderTop: '1px solid #3e3e42', backgroundColor: '#1e1e1e' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', fontSize: '12px', color: '#ccc', backgroundColor: '#2d2d30' }}>
+                <div>Run Output {runOutput.running ? '(running...)' : ''}</div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <span>exit: {runOutput.exitCode === null || runOutput.exitCode === undefined ? '-' : runOutput.exitCode}</span>
+                  {runOutput.timedOut && <span style={{ color: '#f85149' }}>timed out</span>}
+                </div>
+              </div>
+              <div style={{ display: 'flex', height: 'calc(100% - 28px)' }}>
+                <div style={{ flex: 1, padding: '8px', overflow: 'auto', color: '#e5e7eb', whiteSpace: 'pre-wrap' }}>
+                  {runOutput.stdout || ''}
+                </div>
+                <div style={{ width: '1px', backgroundColor: '#3e3e42' }} />
+                <div style={{ flex: 1, padding: '8px', overflow: 'auto', color: '#fca5a5', whiteSpace: 'pre-wrap' }}>
+                  {runOutput.stderr || ''}
+                </div>
+              </div>
             </div>
           </>
         ) : (
