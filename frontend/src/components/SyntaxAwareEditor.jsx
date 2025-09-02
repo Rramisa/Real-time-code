@@ -69,19 +69,29 @@ const SyntaxAwareEditor = React.forwardRef(({
       });
 
       // Listen for marker changes to update error counts
-      monaco.editor.onDidChangeMarkers((e) => {
+      monaco.editor.onDidChangeMarkers((changedResources) => {
         try {
-          if (e.resource.toString() === editor.getModel().uri.toString()) {
-            const markers = monaco.editor.getModelMarkers({ resource: editor.getModel().uri });
-            const errors = markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length;
-            const warnings = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
-            
-            setErrorCount(errors);
-            setWarningCount(warnings);
-            
-            if (onValidationChange) {
-              onValidationChange({ errors, warnings, markers });
-            }
+          const model = editor.getModel();
+          if (!model) return;
+          const modelUri = model.uri;
+          if (!modelUri) return;
+
+          const affected = Array.isArray(changedResources)
+            ? changedResources.some((uri) => {
+                try { return uri && uri.toString && uri.toString() === modelUri.toString(); } catch { return false; }
+              })
+            : false;
+          if (!affected) return;
+
+          const markers = monaco.editor.getModelMarkers({ resource: modelUri });
+          const errors = markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length;
+          const warnings = markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length;
+
+          setErrorCount(errors);
+          setWarningCount(warnings);
+
+          if (onValidationChange) {
+            onValidationChange({ errors, warnings, markers });
           }
         } catch (error) {
           console.error('Error in marker change handler:', error);
