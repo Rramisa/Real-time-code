@@ -18,6 +18,7 @@ const VSCodeLayout = () => {
   const [runOutput, setRunOutput] = useState({ stdout: '', stderr: '', exitCode: null, timedOut: false, running: false });
   const [stdinValue, setStdinValue] = useState('');
   const autoSaveTimeoutRef = useRef(null);
+  const [editorTheme, setEditorTheme] = useState(() => localStorage.getItem('editorTheme') || 'vs-dark');
   const editorRef = useRef(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -517,6 +518,27 @@ const VSCodeLayout = () => {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <select
+            value={editorTheme}
+            onChange={(e) => {
+              const t = e.target.value;
+              setEditorTheme(t);
+              try { localStorage.setItem('editorTheme', t); } catch(_) {}
+            }}
+            style={{
+              backgroundColor: '#1e1e1e',
+              border: '1px solid #3e3e42',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px'
+            }}
+            title="Editor theme"
+          >
+            <option value="vs-dark">Dark</option>
+            <option value="vs-light">Light</option>
+            <option value="hc-black">High Contrast</option>
+          </select>
           <button
             onClick={() => setShowErrorPanel(!showErrorPanel)}
             style={{
@@ -734,7 +756,7 @@ const VSCodeLayout = () => {
                 value={currentFile.content}
                 onChange={handleContentChange}
                 language={getLanguageFromExtension(currentFile.name)}
-                theme="vs-dark"
+                theme={editorTheme}
                 onValidationChange={setValidationState}
                 ref={editorRef}
               />
