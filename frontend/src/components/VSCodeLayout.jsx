@@ -56,6 +56,45 @@ const VSCodeLayout = () => {
     loadEditorSettings(currentFile?.id || currentFile?._id);
   }, [currentFile, loadEditorSettings]);
 
+  // Preferences API helpers
+  const fetchPreferences = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${API_BASE_URL}/api/preferences`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const theme = data?.data?.editorTheme;
+      const options = data?.data?.editorOptions;
+      if (theme) {
+        setEditorTheme(theme);
+        try { localStorage.setItem('editorTheme', theme); } catch (_) {}
+      }
+      if (options && typeof options === 'object') {
+        setEditorOptions(prev => ({ ...prev, ...options }));
+      }
+    } catch (_) {}
+  }, [API_BASE_URL]);
+
+  const savePreferences = useCallback(async (theme, options) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      await fetch(`${API_BASE_URL}/api/preferences`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ editorTheme: theme, editorOptions: options })
+      });
+    } catch (_) {}
+  }, [API_BASE_URL]);
+
+  useEffect(() => { fetchPreferences(); }, [fetchPreferences]);
+
   const saveEditorSettings = (opts, isGlobal, fileId) => {
     try {
       localStorage.setItem(SETTINGS_GLOBAL_KEY, String(isGlobal));
@@ -590,6 +629,7 @@ const VSCodeLayout = () => {
               const t = e.target.value;
               setEditorTheme(t);
               try { localStorage.setItem('editorTheme', t); } catch(_) {}
+              savePreferences(t, editorOptions);
             }}
             style={{
               backgroundColor: '#1e1e1e',
@@ -999,7 +1039,7 @@ const VSCodeLayout = () => {
               </label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => setShowSettings(false)} style={{ backgroundColor: '#6c757d', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Close</button>
-                <button onClick={() => { saveEditorSettings(editorOptions, settingsGlobal, currentFile?.id || currentFile?._id); setShowSettings(false); }}
+                <button onClick={() => { saveEditorSettings(editorOptions, settingsGlobal, currentFile?.id || currentFile?._id); savePreferences(editorTheme, editorOptions); setShowSettings(false); }}
                   style={{ backgroundColor: '#0e639c', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Save</button>
               </div>
             </div>
