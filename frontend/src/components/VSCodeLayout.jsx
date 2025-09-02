@@ -17,6 +17,55 @@ const VSCodeLayout = () => {
   const [validationState, setValidationState] = useState({ errors: 0, warnings: 0, markers: [] });
   const [runOutput, setRunOutput] = useState({ stdout: '', stderr: '', exitCode: null, timedOut: false, running: false });
   const [stdinValue, setStdinValue] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const defaultEditorOptions = {
+    fontSize: 14,
+    tabSize: 2,
+    wordWrap: 'on',
+    lineNumbers: 'on',
+    minimap: { enabled: true },
+    renderWhitespace: 'selection',
+    lineHeight: 22
+  };
+  const [editorOptions, setEditorOptions] = useState(defaultEditorOptions);
+  const [settingsGlobal, setSettingsGlobal] = useState(true);
+
+  const SETTINGS_GLOBAL_KEY = 'editorSettings.global';
+  const SETTINGS_FILE_PREFIX = 'editorSettings.file:';
+
+  const loadEditorSettings = useCallback((fileId) => {
+    try {
+      const globalPref = localStorage.getItem(SETTINGS_GLOBAL_KEY);
+      const isGlobal = globalPref === null ? true : globalPref === 'true';
+      setSettingsGlobal(isGlobal);
+      if (isGlobal) {
+        const stored = localStorage.getItem('editorSettings.options');
+        if (stored) setEditorOptions({ ...defaultEditorOptions, ...JSON.parse(stored) });
+        else setEditorOptions(defaultEditorOptions);
+      } else if (fileId) {
+        const stored = localStorage.getItem(SETTINGS_FILE_PREFIX + fileId);
+        if (stored) setEditorOptions({ ...defaultEditorOptions, ...JSON.parse(stored) });
+        else setEditorOptions(defaultEditorOptions);
+      }
+    } catch (_) {
+      setEditorOptions(defaultEditorOptions);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEditorSettings(currentFile?.id || currentFile?._id);
+  }, [currentFile, loadEditorSettings]);
+
+  const saveEditorSettings = (opts, isGlobal, fileId) => {
+    try {
+      localStorage.setItem(SETTINGS_GLOBAL_KEY, String(isGlobal));
+      if (isGlobal) {
+        localStorage.setItem('editorSettings.options', JSON.stringify(opts));
+      } else if (fileId) {
+        localStorage.setItem(SETTINGS_FILE_PREFIX + fileId, JSON.stringify(opts));
+      }
+    } catch (_) {}
+  };
   const autoSaveTimeoutRef = useRef(null);
   const [editorTheme, setEditorTheme] = useState(() => localStorage.getItem('editorTheme') || 'vs-dark');
   const editorRef = useRef(null);
@@ -518,6 +567,23 @@ const VSCodeLayout = () => {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setShowSettings(true)}
+            style={{
+              backgroundColor: '#404040',
+              border: 'none',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+            onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
+            onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
+            title="Editor settings"
+          >
+            ⚙️ Settings
+          </button>
           <select
             value={editorTheme}
             onChange={(e) => {
@@ -759,6 +825,10 @@ const VSCodeLayout = () => {
                 onChange={handleContentChange}
                 language={getLanguageFromExtension(currentFile.name)}
                 theme={editorTheme}
+                options={{
+                  ...editorOptions,
+                  minimap: { enabled: !!editorOptions?.minimap?.enabled }
+                }}
                 onValidationChange={setValidationState}
                 ref={editorRef}
               />
@@ -858,6 +928,84 @@ const VSCodeLayout = () => {
           }
         }}
       />
+
+      {/* Editor Settings Modal */}
+      {showSettings && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
+        }}>
+          <div style={{ backgroundColor: '#2d2d30', borderRadius: '8px', padding: '20px', width: '420px' }}>
+            <h3 style={{ marginTop: 0, color: 'white' }}>Editor Settings</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Font Size
+                <input type="number" min="10" max="32" value={editorOptions.fontSize}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, fontSize: Number(e.target.value) })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }} />
+              </label>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Tab Size
+                <input type="number" min="1" max="8" value={editorOptions.tabSize}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, tabSize: Number(e.target.value) })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }} />
+              </label>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Line Height
+                <input type="number" min="16" max="40" value={editorOptions.lineHeight}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, lineHeight: Number(e.target.value) })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }} />
+              </label>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Word Wrap
+                <select value={editorOptions.wordWrap}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, wordWrap: e.target.value })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid '#3e3e42', color: 'white', borderRadius: '4px' }}>
+                  <option value="off">Off</option>
+                  <option value="on">On</option>
+                  <option value="wordWrapColumn">Column</option>
+                  <option value="bounded">Bounded</option>
+                </select>
+              </label>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Line Numbers
+                <select value={editorOptions.lineNumbers}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, lineNumbers: e.target.value })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }}>
+                  <option value="on">On</option>
+                  <option value="off">Off</option>
+                  <option value="relative">Relative</option>
+                  <option value="interval">Interval</option>
+                </select>
+              </label>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Minimap
+                <select value={editorOptions.minimap?.enabled ? 'on' : 'off'}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, minimap: { enabled: e.target.value === 'on' } })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }}>
+                  <option value="on">On</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>Render Whitespace
+                <select value={editorOptions.renderWhitespace}
+                  onChange={(e) => setEditorOptions({ ...editorOptions, renderWhitespace: e.target.value })}
+                  style={{ width: '100%', marginTop: '6px', padding: '6px', background: '#1e1e1e', border: '1px solid #3e3e42', color: 'white', borderRadius: '4px' }}>
+                  <option value="none">None</option>
+                  <option value="selection">Selection</option>
+                  <option value="boundary">Boundary</option>
+                  <option value="all">All</option>
+                </select>
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
+              <label style={{ color: '#ccc', fontSize: '12px' }}>
+                <input type="checkbox" checked={settingsGlobal} onChange={(e) => setSettingsGlobal(e.target.checked)} style={{ marginRight: '8px' }} />
+                Apply globally
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setShowSettings(false)} style={{ backgroundColor: '#6c757d', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Close</button>
+                <button onClick={() => { saveEditorSettings(editorOptions, settingsGlobal, currentFile?.id || currentFile?._id); setShowSettings(false); }}
+                  style={{ backgroundColor: '#0e639c', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
