@@ -580,9 +580,9 @@ const VSCodeLayout = () => {
             }}
             onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
             onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
-            title="Editor settings"
+            title="Font"
           >
-            ⚙️ Settings
+            ⚙️ Font
           </button>
           <select
             value={editorTheme}
@@ -936,7 +936,7 @@ const VSCodeLayout = () => {
           backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
         }}>
           <div style={{ backgroundColor: '#2d2d30', borderRadius: '8px', padding: '20px', width: '420px' }}>
-            <h3 style={{ marginTop: 0, color: 'white' }}>Editor Settings</h3>
+            <h3 style={{ marginTop: 0, color: 'white' }}>Font</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <label style={{ color: '#ccc', fontSize: '12px' }}>Font Size
                 <input type="number" min="10" max="32" value={editorOptions.fontSize}
