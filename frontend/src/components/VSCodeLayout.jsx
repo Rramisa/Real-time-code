@@ -16,6 +16,7 @@ const VSCodeLayout = () => {
   const [showErrorPanel, setShowErrorPanel] = useState(false);
   const [validationState, setValidationState] = useState({ errors: 0, warnings: 0, markers: [] });
   const [runOutput, setRunOutput] = useState({ stdout: '', stderr: '', exitCode: null, timedOut: false, running: false });
+  const [stdinValue, setStdinValue] = useState('');
   const autoSaveTimeoutRef = useRef(null);
   const editorRef = useRef(null);
   const { user, logout } = useAuth();
@@ -462,7 +463,7 @@ const VSCodeLayout = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ language, code: currentFile.content || '' })
+        body: JSON.stringify({ language, code: currentFile.content || '', stdin: stdinValue })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -740,7 +741,7 @@ const VSCodeLayout = () => {
             </div>
 
             {/* Output Panel */}
-            <div style={{ height: '160px', borderTop: '1px solid #3e3e42', backgroundColor: '#1e1e1e' }}>
+            <div style={{ height: '220px', borderTop: '1px solid #3e3e42', backgroundColor: '#1e1e1e' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', fontSize: '12px', color: '#ccc', backgroundColor: '#2d2d30' }}>
                 <div>Run Output {runOutput.running ? '(running...)' : ''}</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -748,7 +749,40 @@ const VSCodeLayout = () => {
                   {runOutput.timedOut && <span style={{ color: '#f85149' }}>timed out</span>}
                 </div>
               </div>
-              <div style={{ display: 'flex', height: 'calc(100% - 28px)' }}>
+              <div style={{ display: 'flex', gap: '8px', padding: '8px', borderBottom: '1px solid #3e3e42' }}>
+                <input
+                  type="text"
+                  value={stdinValue}
+                  onChange={(e) => setStdinValue(e.target.value)}
+                  placeholder="Stdin (sent once at start; use \n for newlines)"
+                  style={{
+                    flex: 1,
+                    padding: '6px 8px',
+                    backgroundColor: '#1e1e1e',
+                    border: '1px solid #3e3e42',
+                    borderRadius: '4px',
+                    color: 'white',
+                    fontSize: '12px'
+                  }}
+                />
+                <button
+                  onClick={() => setStdinValue('')}
+                  style={{
+                    backgroundColor: '#404040',
+                    border: 'none',
+                    color: 'white',
+                    padding: '6px 10px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
+                  onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
+                >
+                  Clear
+                </button>
+              </div>
+              <div style={{ display: 'flex', height: 'calc(100% - 58px)' }}>
                 <div style={{ flex: 1, padding: '8px', overflow: 'auto', color: '#e5e7eb', whiteSpace: 'pre-wrap' }}>
                   {runOutput.stdout || ''}
                 </div>

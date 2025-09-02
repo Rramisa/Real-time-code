@@ -8,10 +8,10 @@ const os = require('os');
 
 const SUPPORTED = {
   javascript: {
-    run: async (code) => runNode(code)
+    run: async (code, stdin) => runNode(code, stdin)
   },
   python: {
-    run: async (code) => runPython(code)
+    run: async (code, stdin) => runPython(code, stdin)
   }
 };
 
@@ -37,22 +37,30 @@ function runWithTimeout(child, timeoutMs) {
   });
 }
 
-async function runNode(code) {
+async function runNode(code, stdinData) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'exec-js-'));
   const file = path.join(tmpDir, 'main.js');
   fs.writeFileSync(file, code, 'utf8');
-  const child = spawn(process.execPath, [file], { cwd: tmpDir, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [file], { cwd: tmpDir, stdio: ['pipe', 'pipe', 'pipe'] });
+  if (stdinData !== undefined && stdinData !== null) {
+    try { child.stdin.write(String(stdinData)); } catch (_) {}
+  }
+  try { child.stdin.end(); } catch (_) {}
   const result = await runWithTimeout(child, 4000);
   try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
   return result;
 }
 
-async function runPython(code) {
+async function runPython(code, stdinData) {
   const python = process.env.PYTHON_PATH || 'python';
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'exec-py-'));
   const file = path.join(tmpDir, 'main.py');
   fs.writeFileSync(file, code, 'utf8');
-  const child = spawn(python, [file], { cwd: tmpDir, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(python, [file], { cwd: tmpDir, stdio: ['pipe', 'pipe', 'pipe'] });
+  if (stdinData !== undefined && stdinData !== null) {
+    try { child.stdin.write(String(stdinData)); } catch (_) {}
+  }
+  try { child.stdin.end(); } catch (_) {}
   const result = await runWithTimeout(child, 4000);
   try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
   return result;
@@ -60,7 +68,7 @@ async function runPython(code) {
 
 const executeCode = async (req, res) => {
   try {
-    const { language, code } = req.body || {};
+    const { language, code, stdin } = req.body || {};
     if (!language || !code) {
       return res.status(400).json({ success: false, message: 'language and code are required' });
     }
@@ -70,7 +78,7 @@ const executeCode = async (req, res) => {
       return res.status(400).json({ success: false, message: `Unsupported language: ${language}` });
     }
 
-    const result = await SUPPORTED[key].run(code);
+    const result = await SUPPORTED[key].run(code, stdin);
     return res.json({ success: true, ...result });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Execution failed', error: String(err) });
